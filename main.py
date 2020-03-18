@@ -1,93 +1,92 @@
 import pygame
 
-from tetrion import tetrion
+from tetrion import Tetrion
+
+from blocks import BlockI
 
 
-def get_tetrion_part(i, j):
-    return [row[i:i+5] for row in tetrion[j:j+5]]
+def print_white_background():
+    screen.fill((255, 255, 255))
 
 
-def can_move(block, tetr_part):
-    for i in range(5):
-        for j in range(5):
-            if block[i][j] and tetr_part[i][j]:
-                return False
-    return True
+def print_board():
+    for y, row in enumerate(tetrion.board):
+        for x, cell in enumerate(row):
+            if cell == 1:
+                pygame.draw.rect(screen, (0, 0, 0),
+                                 (x*square_size, y*square_size, square_size, square_size), 1)
 
 
-def check_last_row():
-    pass
-
-
-def check_if_lost():
-    pass
-
-
-def update_tetrion(block, i, j):
-    for row_number, row in enumerate(block):
-        for cell_number, cell in enumerate(row):
-            if cell:
-                tetrion[i+row_number][j+cell_number] = cell
+def print_block():
+    for y, row in enumerate(block.state):
+        for x, cell in enumerate(row):
+            if cell == 1:
+                pygame.draw.rect(screen, (255, 0, 0),
+                                 ((x+block.x)*square_size, (y+block.y)*square_size, square_size, square_size))
 
 
 pygame.init()
 
-a = [[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [
+a = [[0, 1, 1, 0, 0], [0, 0, 1, 0, 0], [
     0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0]]
 
 rows = 25
 cols = 14
 square_size = 40
 screen = pygame.display.set_mode((cols*square_size, rows*square_size))
+
 running = True
-coord_x = 0
-coord_y = 0
-
 time = 0
+prepare_next = False
+tetrion = Tetrion()
+block = BlockI()
 
-print(get_tetrion_part(1, 0))
+next_block = False
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
         keys = pygame.key.get_pressed()
+
         if keys[pygame.K_RIGHT]:
-            if coord_x < 9:
-                if can_move(a, get_tetrion_part(coord_x + 1, coord_y)):
-                    coord_x += 1
-                    print('gowno')
+            if block.check_if_on_edge('right'):
+                x, y = block.get_coords()
+                part = tetrion.get_part(x+1, y)
+                if block.can_move(part):
+                    block.move_right()
+
         if keys[pygame.K_LEFT]:
-            if coord_x > 0:
-                if can_move(a, get_tetrion_part(coord_x - 1, coord_y)):
-                    coord_x -= 1
-                    print('gowno')
+            if block.check_if_on_edge('left'):
+                x, y = block.get_coords()
+                part = tetrion.get_part(x-1, y)
+                if block.can_move(part):
+                    block.move_left()
 
-    if (pygame.time.get_ticks() // 1000) > time:
-        if coord_y < 19:
-            if can_move(a, get_tetrion_part(coord_x, coord_y+1)):
-                coord_y += 1
+    if (pygame.time.get_ticks() // 500) > time:
+
+        if block.check_if_on_edge('bottom'):
+            x, y = block.get_coords()
+            part = tetrion.get_part(x, y+1)
+            if block.can_move(part):
+                block.move_down()
             else:
-                print(coord_x, coord_y)
-                update_tetrion(a, coord_y, coord_x)
-                print('xDDD')
-                coord_x = 2
-                coord_y = 0
+                prepare_next = True
+        else:
+            prepare_next = True
 
+        if prepare_next:
+            tetrion.update_board(block.state, block.y, block.x)
+            if tetrion.check_last_row():
+                tetrion.move_row_down()
+            #score += 1
+            block = BlockI()
+            prepare_next = False
         time += 1
         print(f'minelo {time} sekund')
 
-    screen.fill((255, 255, 255))
-
-    for y, row in enumerate(tetrion):
-        for x, cell in enumerate(row):
-            if cell == 1:
-                pygame.draw.rect(screen, (0, 0, 0),
-                                 (x*square_size, y*square_size, square_size, square_size), 1)
-
-    for y, row in enumerate(a):
-        for x, cell in enumerate(row):
-            if cell == 1:
-                pygame.draw.rect(screen, (255, 0, 0),
-                                 ((x+coord_x)*square_size, (y+coord_y)*square_size, square_size, square_size))
+    print_white_background()
+    print_board()
+    print_block()
     pygame.display.update()
