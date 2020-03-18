@@ -1,1 +1,3 @@
-/home/bartoszornoch/Projects/Tetris/tetris_venv
+tetris_venv
+__pycache__
+.vscode
