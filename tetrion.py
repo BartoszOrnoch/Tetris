@@ -25,22 +25,20 @@ class Tetrion:
                       [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
                       [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
                       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
 
-    def check_last_row(self):
-        if self.board[22] == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
-            return True
-
-    def move_row_down(self):
-        previous_row = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
-        for i in range(5, 23):
-            self.board[i], previous_row = previous_row, self.board[i]
+    def remove_rows(self):
+        rows_removed = 0
+        for index, row in enumerate(self.board[5:25], 5):
+            if all(row):
+                self.board[5:index+1] = self.board[4:index]
+                rows_removed += 1
+        return rows_removed
 
     def is_lost(self):
-        for cell in self.board[4][3:13]:
-            if cell:
-                return True
-        return False
+        return any(self.board[4][3:13])
 
     def update_board(self, block, i, j):
         for row_number, row in enumerate(block):
@@ -53,5 +51,4 @@ class Tetrion:
 
 
 a = Tetrion()
-
-print(a.board[23])
+print(len(a.board))

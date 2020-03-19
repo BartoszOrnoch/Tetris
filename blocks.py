@@ -3,14 +3,14 @@ class BlockI:
     rotations = [[[0, 0, 2, 0, 0], [0, 0, 2, 0, 0], [
         0, 0, 2, 0, 0], [0, 0, 2, 0, 0], [0, 0, 0, 0, 0]],
         [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [
-            0, 2, 2, 2, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
+            0, 2, 2, 2, 2], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
         [[0, 0, 0, 0, 0], [0, 0, 2, 0, 0], [
             0, 0, 2, 0, 0], [0, 0, 2, 0, 0], [0, 0, 2, 0, 0]],
         [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [
             2, 2, 2, 2, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]]
 
     def __init__(self):
-        self.x = 2
+        self.x = 6
         self.y = 0
         self.current_rotation = 0
         self.next_rotation = 1
@@ -29,7 +29,7 @@ class BlockI:
         if edge == 'right':
             return self.x < 9
         if edge == 'bottom':
-            return self.y < 20
+            return self.y < 22
 
     def can_rotate(self, tetr_part):
         for i in range(5):

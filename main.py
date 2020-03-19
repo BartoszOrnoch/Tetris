@@ -1,35 +1,43 @@
 import pygame
+import blocks
+import random
 
 from tetrion import Tetrion
 
-import blocks
+
+def square_postion(x, y, local_shift_x, local_shift_y):
+    return ((x+local_shift_x)*square_size + GLOBAL_SHIFT_X, (y + local_shift_y)*square_size + GLOBAL_SHIFT_Y, square_size, square_size)
 
 
 def print_white_background():
     screen.fill((255, 255, 255))
 
 
-def print_board():
-    for y, row in enumerate(tetrion.board):
+def print_board(array2d, local_shift_x=0, local_shift_y=0):
+    for y, row in enumerate(array2d):
         for x, cell in enumerate(row):
             if cell:
-                pygame.draw.rect(screen, (0, 0, 0),
-                                 (x*square_size, y*square_size, square_size, square_size), 1)
+                pygame.draw.rect(
+                    screen, colors[cell], square_postion(x, y, local_shift_x, local_shift_y))
 
 
-def print_block():
-    for y, row in enumerate(block.state):
-        for x, cell in enumerate(row):
-            if cell:
-                pygame.draw.rect(screen, (255, 0, 0),
-                                 ((x+block.x)*square_size, (y+block.y)*square_size, square_size, square_size))
+def get_random_block():
+    return random.choice([blocks.BlockI(), blocks.BlockJ(), blocks.BlockL(), blocks.BlockO(), blocks.BlockS(), blocks.BlockT(), blocks.BlockZ()])
+
+
+colors = [(255, 255, 255), (255, 255, 255), (0, 255, 255), (128, 0, 128),
+          (255, 165, 0), (0, 0, 255), (0, 128, 0), (255, 0, 0), (255, 255, 0)]
+
+square_size = 40
+GLOBAL_SHIFT_X = - square_size
+GLOBAL_SHIFT_Y = - square_size*4
 
 
 pygame.init()
 
-rows = 25
+rows = 22
 cols = 14
-square_size = 40
+
 screen = pygame.display.set_mode((cols*square_size, rows*square_size))
 
 running = True
@@ -37,8 +45,8 @@ time = 0
 score = 0
 prepare_next = False
 tetrion = Tetrion()
-block = blocks.BlockO()
-next_block = False
+block = get_random_block()
+next_block = get_random_block()
 
 while running:
     for event in pygame.event.get():
@@ -96,13 +104,17 @@ while running:
 
     if prepare_next:
         tetrion.update_board(block.state, block.y, block.x)
-        if tetrion.check_last_row():
-            tetrion.move_row_down()
-            #score += 1
-        block = blocks.BlockI()
+        score += tetrion.remove_rows() ** 2 * 1000
+        print(score)
+        block = next_block
+        next_block = get_random_block()
         prepare_next = False
 
     print_white_background()
-    print_board()
-    print_block()
+    print_board(tetrion.board)
+    print_board(block.state, block.x, block.y)
+    pygame.draw.rect(screen, (0, 0, 0),
+                     (square_size, square_size, square_size*10, square_size*20), 1)
+    # print_block(next_block)
+
     pygame.display.update()
