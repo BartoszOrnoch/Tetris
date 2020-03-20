@@ -11,7 +11,7 @@ class BlockI:
 
     def __init__(self):
         self.x = 6
-        self.y = 0
+        self.y = 1
         self.current_rotation = 0
         self.next_rotation = 1
         self.state = self.rotations[self.current_rotation]
