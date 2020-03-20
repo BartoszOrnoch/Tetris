@@ -30,9 +30,21 @@ def draw_text(text, postion_x, postion_y):
         text, True, COLORS[0]), (postion_x*SQUARE_SIZE, postion_y*SQUARE_SIZE))
 
 
+def pause():
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_p]:
+                return True
+        pygame.display.update()
+
+
 COLORS = [(255, 255, 255), (0, 0, 0), (0, 255, 255), (128, 0, 128),
           (255, 165, 0), (0, 0, 255), (0, 128, 0), (255, 0, 0), (255, 255, 0)]
-
 SQUARE_SIZE = 40
 GLOBAL_SHIFT_X = - SQUARE_SIZE
 GLOBAL_SHIFT_Y = - SQUARE_SIZE*4
@@ -53,17 +65,43 @@ def main():
     tetrion = Tetrion()
     block = get_random_block()
     next_block = get_random_block()
+    clock = pygame.time.Clock()
 
     time = 0
     score = 0
     level = 1
+
+    try_move_down = False
+    try_move_left = False
+    try_move_right = False
+    try_rotate = False
+
+    block_down_event = pygame.time.set_timer(25, 1000 - level*100)
+    pygame.time.set_timer(26, 1000)
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
+            if event.type == 26:
+                time += 1
+
+            if event.type == 25:
+                if block.check_if_on_edge('bottom'):
+                    x, y = block.get_coords()
+                    part = tetrion.get_part(x, y+1)
+                    if block.can_move(part):
+                        block.move_down()
+                    else:
+                        prepare_next = True
+                else:
+                    prepare_next = True
+
             keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_p]:
+                running = pause()
 
             if keys[pygame.K_d]:
                 if block.check_if_on_edge('right'):
@@ -71,22 +109,26 @@ def main():
                     part = tetrion.get_part(x+1, y)
                     if block.can_move(part):
                         block.move_right()
+                        print(block.get_coords())
+                break
 
-            if keys[pygame.K_a]:
+            elif keys[pygame.K_a]:
                 if block.check_if_on_edge('left'):
                     x, y = block.get_coords()
                     part = tetrion.get_part(x-1, y)
                     if block.can_move(part):
                         block.move_left()
+                        print(block.get_coords())
+                break
 
-            if keys[pygame.K_r]:
+            elif keys[pygame.K_r]:
                 x, y = block.get_coords()
                 part = tetrion.get_part(x, y)
                 if block.can_rotate(part):
-                    print('nic')
                     block.rotate()
+                break
 
-            if keys[pygame.K_s]:
+            elif keys[pygame.K_s]:
                 while prepare_next == False:
                     if block.check_if_on_edge('bottom'):
                         x, y = block.get_coords()
@@ -98,26 +140,14 @@ def main():
                     else:
                         prepare_next = True
 
-        if (pygame.time.get_ticks() // 500) > time:
-
-            if block.check_if_on_edge('bottom'):
-                x, y = block.get_coords()
-                part = tetrion.get_part(x, y+1)
-                if block.can_move(part):
-                    block.move_down()
-                else:
-                    prepare_next = True
-            else:
-                prepare_next = True
-            time += 0.5
-            print(f'minelo {time} sekund')
-
         if prepare_next:
             tetrion.update_board(block.state, block.y, block.x)
             score += tetrion.remove_rows() ** 2 * 1000
             block = next_block
             next_block = get_random_block()
             prepare_next = False
+            level += 1
+            block_down_event = pygame.time.set_timer(25, 1000 - level*100)
 
         print_white_background()
         draw_squares(tetrion.board)
@@ -132,6 +162,7 @@ def main():
         # print_block(next_block)
 
         pygame.display.update()
+        clock.tick(60)
 
 
 main()
