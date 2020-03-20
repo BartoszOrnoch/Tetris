@@ -38,7 +38,7 @@ class Tetrion:
         return rows_removed
 
     def is_lost(self):
-        return any(self.board[4][3:13])
+        return any(self.board[4][2:12])
 
     def update_board(self, block, i, j):
         for row_number, row in enumerate(block):

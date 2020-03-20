@@ -1,37 +1,14 @@
 import pygame
-import blocks
-import random
 
+import blocks
+import settings as sett
+import draw
 from tetrion import Tetrion
 
 
-def square_coords(x, y, local_shift_x, local_shift_y):
-    return ((x+local_shift_x)*SQUARE_SIZE + GLOBAL_SHIFT_X, (y + local_shift_y)*SQUARE_SIZE + GLOBAL_SHIFT_Y, SQUARE_SIZE, SQUARE_SIZE)
-
-
-def print_white_background():
-    screen.fill((0, 0, 0))
-
-
-def draw_squares(array2d, local_shift_x=0, local_shift_y=0):
-    for y, row in enumerate(array2d):
-        for x, cell in enumerate(row):
-            if cell:
-                pygame.draw.rect(
-                    screen, COLORS[cell], square_coords(x, y, local_shift_x, local_shift_y))
-
-
-def get_random_block():
-    return random.choice([blocks.BlockI(), blocks.BlockJ(), blocks.BlockL(), blocks.BlockO(), blocks.BlockS(), blocks.BlockT(), blocks.BlockZ()])
-
-
-def draw_text(text, postion_x, postion_y):
-    screen.blit(font.render(
-        text, True, COLORS[0]), (postion_x*SQUARE_SIZE, postion_y*SQUARE_SIZE))
-
-
 def pause():
-
+    screen.blit(pause_screen, (0, 0))
+    pygame.display.update()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -39,32 +16,42 @@ def pause():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     return True
-        pygame.display.update()
+        clock.tick(30)
 
 
-COLORS = [(255, 255, 255), (0, 0, 0), (0, 255, 255), (128, 0, 128),
-          (255, 165, 0), (0, 0, 255), (0, 128, 0), (255, 0, 0), (255, 255, 0)]
-SQUARE_SIZE = 40
-GLOBAL_SHIFT_X = - SQUARE_SIZE
-GLOBAL_SHIFT_Y = - SQUARE_SIZE*4
-WIDTH = SQUARE_SIZE * 21
-HEIGHT = SQUARE_SIZE * 22
+def main_menu():
+    screen.blit(menu_screen, (0, 0))
+    pygame.display.update()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return True
+        clock.tick(30)
+
 
 pygame.init()
 pygame.font.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
 font = pygame.font.SysFont("comicsansms", 40)
+screen = pygame.display.set_mode((sett.WIDTH, sett.HEIGHT))
+menu_screen = pygame.Surface((sett.SQUARE_SIZE*12, sett.SQUARE_SIZE*22))
+pause_screen = menu = pygame.Surface(
+    (sett.SQUARE_SIZE*12, sett.SQUARE_SIZE*22))
+game_over_screen = pygame.Surface((sett.SQUARE_SIZE*12, sett.SQUARE_SIZE*22))
+clock = pygame.time.Clock()
 
 
 def main():
 
     running = True
+    is_game_over = False
 
     prepare_next = False
     tetrion = Tetrion()
-    block = get_random_block()
-    next_block = get_random_block()
-    clock = pygame.time.Clock()
+    block = blocks.get_random_block()
+    next_block = blocks.get_random_block()
 
     score = 0
     level = 1
@@ -78,10 +65,22 @@ def main():
     try_rotate = False
     drop = False
 
-    block_down_event = pygame.time.set_timer(25, 1000)
+    main_menu_active = True
     pygame.time.set_timer(26, 100)
 
+    draw.draw_text(menu_screen, 'Press ENTER to start game',
+                   sett.COLORS[0], font, 0, 0)
+    draw.draw_rectangle(menu_screen, sett.SQUARE_SIZE, sett.SQUARE_SIZE,
+                        sett.SQUARE_SIZE*10, sett.SQUARE_SIZE*20)
+    draw.draw_text(pause_screen, 'Game is Paused', sett.COLORS[0], font, 0, 0)
+    draw.draw_rectangle(pause_screen, sett.SQUARE_SIZE, sett.SQUARE_SIZE,
+                        sett.SQUARE_SIZE*10, sett.SQUARE_SIZE*20)
+
     while running:
+        if main_menu_active:
+            running = main_menu()
+        main_menu_active = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -161,23 +160,30 @@ def main():
             tetrion.update_board(block.state, block.y, block.x)
             score += tetrion.remove_rows() ** 2 * 1000
             block = next_block
-            next_block = get_random_block()
+            next_block = blocks.get_random_block()
             prepare_next = False
             level += 1
 
-        print_white_background()
-        draw_squares(tetrion.board)
-        draw_squares(block.state, block.x, block.y)
-        draw_squares(next_block.state, 17, 5)
-        pygame.draw.rect(screen, (255, 255, 255),
-                         (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE*10, SQUARE_SIZE*20), 2)
-        draw_text('NEXT BLOCK:', 12, 4)
-        draw_text(f'SCORE: {score}', 12, 8)
-        draw_text(f'LEVEL: {level}', 12, 9)
-        draw_text(f'TIME: {time // 1000} s', 12, 10)
-        draw_text(f'MOVE TIME: {move_time}', 12, 11)
+        draw.fill_surface(screen, sett.COLORS[1])
+        draw.draw_squares(tetrion.board, screen)
+        draw.draw_squares(block.state, screen, block.x, block.y)
+        draw.draw_squares(next_block.state, screen, 17, 5)
+        draw.draw_rectangle(screen, sett.SQUARE_SIZE, sett.SQUARE_SIZE,
+                            sett.SQUARE_SIZE*10, sett.SQUARE_SIZE*20)
+        draw.draw_text(screen, 'NEXT BLOCK:', sett.COLORS[0], font, 12, 4)
+        draw.draw_text(screen, f'SCORE: {score}', sett.COLORS[0], font, 12, 8)
+        draw.draw_text(screen, f'LEVEL: {level}', sett.COLORS[0], font, 12, 9)
+        draw.draw_text(
+            screen, f'TIME: {time // 1000} s', sett.COLORS[0], font, 12, 10)
+        draw.draw_text(
+            screen, f'MOVE TIME: {move_time}', sett.COLORS[0], font, 12, 11)
+
+        is_game_over = tetrion.is_lost()
+        if is_game_over:
+            print('przegrana')
 
         pygame.display.update()
+        clock.tick(30)
 
 
 main()

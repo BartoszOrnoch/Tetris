@@ -1,3 +1,6 @@
+import random
+
+
 class BlockI:
 
     rotations = [[[0, 0, 2, 0, 0], [0, 0, 2, 0, 0], [
@@ -116,3 +119,7 @@ class BlockO(BlockI):
 
     def can_rotate(self, part):
         return False
+
+
+def get_random_block():
+    return random.choice([BlockI(), BlockJ(), BlockL(), BlockO(), BlockS(), BlockT(), BlockZ()])
