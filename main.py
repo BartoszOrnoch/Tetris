@@ -1,14 +1,57 @@
 import pygame
-import random
 import blocks
 import settings as sett
 import draw
 from tetrion import Tetrion
 
 
-def pause():
+def main_menu():
+    colors = sett.COLORS[2:]
+    current_color = colors.pop()
+    time = 0
+    level = 1
+    instructions_surface = draw.get_instruction_surface()
+    menu_screen = draw.get_menu_surface(level, current_color)
 
-    screen.blit(pause_screen, (0, 0))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False, level
+            if event.type == 26:
+                time += 100
+                if time == 1000:
+                    current_color = colors.pop()
+                    if colors == []:
+                        colors = sett.COLORS[2:]
+                    menu_screen = draw.get_menu_surface(level, current_color)
+                    time = 0
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    return True, level
+                if event.key == pygame.K_w:
+                    if level < 10:
+                        level += 1
+                        menu_screen = draw.get_menu_surface(
+                            level, current_color)
+                if event.key == pygame.K_s:
+                    if level > 1:
+                        level -= 1
+                        menu_screen = draw.get_menu_surface(
+                            level, current_color)
+
+        draw.draw_surface(screen, menu_screen, 0, 0)
+        draw.draw_surface(screen, instructions_surface, 12, 2)
+        draw.draw_rectangle(screen, 1, 1, 10, 20)
+        pygame.display.update()
+        clock.tick(30)
+
+
+def pause():
+    pause_screen = draw.get_pause_surface()
+    instructions_surface = draw.get_instruction_surface()
+    draw.draw_surface(screen, pause_screen, 0, 0)
+    draw.draw_surface(screen, instructions_surface, 12, 2)
+    draw.draw_rectangle(screen, 1, 1, 10, 20)
     pygame.display.update()
     while True:
         for event in pygame.event.get():
@@ -20,102 +63,38 @@ def pause():
         clock.tick(30)
 
 
-def main_menu():
-    def get_space(surface):
-        return (surface.get_rect().width, surface.get_rect().height)
-
-    def update_level():
-        level_surface = font.render(
-            f'LEVEL: {level}', True, sett.COLORS[0], sett.COLORS[1])
-        level_x, level_y = get_space(level_surface)
-        draw.draw_rectangle(menu_screen, (sett.TEXT_SURFACE_WIDTH - level_x)/2 * 0.9,
-                            (sett.TEXT_SURFACE_HEIGHT - level_y)/2 + sett.SQUARE_SIZE, level_x * 1.2, level_y, position_in_squares=False, border=0, color=sett.COLORS[1])
-
-        draw.draw_text(menu_screen, level_surface, (sett.TEXT_SURFACE_WIDTH - level_x)/2,
-                       (sett.TEXT_SURFACE_HEIGHT - level_y)/2 + sett.SQUARE_SIZE, position_in_squares=False)
-
-    def update_enter_game(color):
-        enter_game_text = 'press ENTER to start'
-        enter_surface = font.render(
-            enter_game_text, True, color)
-        enter_x, enter_y = get_space(enter_surface)
-        draw.draw_text(menu_screen, enter_surface, (sett.TEXT_SURFACE_WIDTH - enter_x)/2,
-                       (sett.TEXT_SURFACE_HEIGHT - enter_y)/2, position_in_squares=False)
-    level = 1
-    colors = sett.COLORS[2:]
-    time = 0
-    update_enter_game(colors.pop())
-    update_level()
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False, level
-            if event.type == 26:
-                time += 100
-                if time == 1000:
-                    if colors == []:
-                        colors = sett.COLORS[2:]
-                    update_enter_game(colors.pop())
-                    time = 0
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    return True, level
-                if event.key == pygame.K_w:
-                    if level < 10:
-                        level += 1
-                        update_level()
-                if event.key == pygame.K_s:
-                    if level > 1:
-                        level -= 1
-                        update_level()
-
-        screen.blit(menu_screen, (0, 0))
-        draw.draw_rectangle(menu_screen, 1, 1, 10, 20)
-        pygame.display.update()
-        clock.tick(30)
-
-
-def game_over():
-    screen.blit(game_over_screen, (0, 0))
+def game_over(score):
+    game_over_screen = draw.get_game_over_surface(score)
+    ladderboard_screen = draw.get_ladderboard_surface(score)
+    draw.draw_surface(screen, game_over_screen, 0, 0)
+    draw.draw_surface(screen, ladderboard_screen, 12, 2)
+    draw.draw_rectangle(screen, 1, 1, 10, 20)
     pygame.display.update()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
+                if event.key == pygame.K_SPACE:
                     return True
         clock.tick(30)
 
 
 pygame.init()
-pygame.font.init()
-font = pygame.font.SysFont("small pixel", 25)
+clock = pygame.time.Clock()
 screen = pygame.display.set_mode(
     (sett.WIDTH, sett.HEIGHT))
-menu_screen = pygame.Surface(
-    (sett.TEXT_SURFACE_WIDTH, sett.TEXT_SURFACE_HEIGHT))
-pause_screen = pygame.Surface(
-    (sett.TEXT_SURFACE_WIDTH, sett.TEXT_SURFACE_HEIGHT))
-game_over_screen = pygame.Surface(
-    (sett.TEXT_SURFACE_WIDTH, sett.TEXT_SURFACE_HEIGHT))
-clock = pygame.time.Clock()
 
 
 def main():
 
     running = True
     main_menu_active = True
-    restart = True
-
     pygame.time.set_timer(26, 100)
 
     while running:
         if main_menu_active:
             running, level = main_menu()
-            main_menu_active = False
-
-        if restart:
             tetrion = Tetrion()
             block = blocks.get_random_block()
             next_block = blocks.get_random_block()
@@ -123,13 +102,13 @@ def main():
             score = 0
             time = 0
             move_time = 0
-            move_time_limit = 1000
+            move_time_limit = 1000 - (level-1)*100
             try_move_down = False
             try_move_left = False
             try_move_right = False
             try_rotate = False
             drop = False
-            restart = False
+            main_menu_active = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -209,30 +188,29 @@ def main():
         if prepare_next:
             tetrion.update_board(block.state, block.y, block.x)
             score += tetrion.remove_rows() ** 2 * 1000
+            score += 100
             block = next_block
             next_block = blocks.get_random_block()
             prepare_next = False
-            level += 1
 
-        score_surface = font.render(f'SCORE: {score}', True, sett.COLORS[0])
-        time_surface = font.render(
-            f'TIME: {time // 1000} s', True, sett.COLORS[0])
-        level_surface = font.render(f'LEVEL: {level}', True, sett.COLORS[0])
+        score_surface = draw.get_text_surface(f'SCORE: {score}')
+        time_surface = draw.get_text_surface(f'TIME: {time // 1000}')
+        level_surface = draw.get_text_surface(f'LEVEL: {level}')
+        next_block_surface = draw.get_text_surface('next block:')
 
         draw.fill_surface(screen, sett.COLORS[1])
         draw.draw_squares(tetrion.board, screen)
         draw.draw_squares(block.state, screen, block.x, block.y)
         draw.draw_squares(next_block.state, screen, 17, 5)
         draw.draw_rectangle(screen, 1, 1, 10, 20)
-        draw.draw_text(screen, level_surface, 12, 4)
-        draw.draw_text(screen, score_surface, 12, 8)
-        draw.draw_text(screen, level_surface, 12, 9)
-        draw.draw_text(screen, time_surface, 12, 10)
-        # draw.draw_text(screen, f'MOVE TIME: {move_time}', font, 12, 11)
+        draw.draw_surface(screen, next_block_surface, 12, 4)
+        draw.draw_surface(screen, score_surface, 12, 8)
+        draw.draw_surface(screen, level_surface, 12, 9)
+        draw.draw_surface(screen, time_surface, 12, 10)
 
         if tetrion.is_lost():
-            running = game_over()
-            restart = True
+            running = game_over(score)
+            main_menu_active = True
 
         pygame.display.update()
         clock.tick(30)

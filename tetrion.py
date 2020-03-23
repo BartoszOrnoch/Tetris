@@ -48,7 +48,3 @@ class Tetrion:
 
     def get_part(self, i, j):
         return [row[i:i+5] for row in self.board[j:j+5]]
-
-
-a = Tetrion()
-print(len(a.board))
